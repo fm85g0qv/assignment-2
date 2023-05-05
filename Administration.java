@@ -1,6 +1,10 @@
 //this is all very placeholder still, but it's a start
 
 import java.util.Scanner;
+import java.io.*;
+import java.util.List;
+import java.util.ArrayList;
+
 
 public class Administration {
     private final Scanner scanner;
@@ -9,33 +13,186 @@ public class Administration {
         scanner = new Scanner(System.in);
     }
 
+    public void createPlayer() {
+        System.out.println("Enter username:");
+        String username = scanner.next();
+        System.out.println("Enter password:");
+        String password = scanner.next();
+        System.out.println("Enter starting chips:");
+        int chips = scanner.nextInt();
+
+        try {
+            // create a file output stream for writing to the binary file
+            FileOutputStream fileOut = new FileOutputStream("players.bin", true);
+
+            // create a data output stream for writing primitive data types to the file
+            // output stream
+            DataOutputStream dataOut = new DataOutputStream(fileOut);
+
+            // write the player information to the file as primitive data types
+            dataOut.writeUTF(username);
+            dataOut.writeUTF(Utility.getHash(password));
+            dataOut.writeInt(chips);
+
+            // close the data output stream and file output stream
+            dataOut.close();
+            fileOut.close();
+
+            System.out.println("Player created successfully.");
+        } catch (IOException e) {
+            System.out.println("Error creating player.");
+            e.printStackTrace();
+        }
+    }
+
+    public void viewPlayers() {
+        System.out.println("USERNAME\tPASSWORD\t\t\t\t\t\t\t\t\tCHIPS");
+        System.out.println("------------------------------------------------------------------------------------------------------");
+    
+        try {
+            FileInputStream fileIn = new FileInputStream("players.bin");
+            try (DataInputStream dataIn = new DataInputStream(fileIn)) {
+                while (true) {
+                    String username = dataIn.readUTF();
+                    String password = dataIn.readUTF();
+                    int chips = dataIn.readInt();
+   
+                    System.out.printf("%s\t\t%s\t\t%d\n", username, password, chips);
+                }
+            }
+        } catch (EOFException e) {
+            System.out.println("------------------------------------------------------------------------------------------------------");
+        } catch (IOException e) {
+            System.out.println("Error viewing players.");
+            e.printStackTrace();
+        }
+    }
+    
+    public void deletePlayer() {
+        System.out.print("Enter username of player to delete (Type 'cancel' to quit.):");
+        String usernameToDelete = scanner.next();
+        boolean playerDeleted = false;
+
+        if (usernameToDelete.equalsIgnoreCase("cancel")) {
+            System.out.println("Delete player cancelled.\n");
+            return;
+        }
+
+    
+        try {
+            FileInputStream fileIn = new FileInputStream("players.bin");
+            FileOutputStream fileOut = new FileOutputStream("players.tmp");
+    
+            try (DataInputStream dataIn = new DataInputStream(fileIn);
+                 DataOutputStream dataOut = new DataOutputStream(fileOut)) {
+    
+                while (true) {
+                    String username = dataIn.readUTF();
+                    String password = dataIn.readUTF();
+                    int chips = dataIn.readInt();
+    
+                    if (username.equals(usernameToDelete)) {
+                        System.out.printf("Player with username '%s' deleted.\n\n\n", username);
+                        playerDeleted = true; // set the variable to true
+                    } else {
+                        dataOut.writeUTF(username);
+                        dataOut.writeUTF(password);
+                        dataOut.writeInt(chips);
+                    }
+                }
+            } catch (EOFException e) {
+                fileIn.close();
+                fileOut.close();
+    
+                File oldFile = new File("players.bin");
+                File newFile = new File("players.tmp");
+                oldFile.delete();
+                newFile.renameTo(oldFile);
+    
+                if (!playerDeleted) { // check if no player was deleted
+                    System.out.printf("No player found with username '%s'.\n\n\n", usernameToDelete);
+                    deletePlayer();
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error deleting player.");
+            e.printStackTrace();
+        }
+    }
+    
+    public void editChips() {
+        System.out.println("Enter the username of the player you want to edit:");
+        String username = scanner.next();
+    
+        try {
+            RandomAccessFile raf = new RandomAccessFile("players.bin", "rw");
+            boolean found = false;
+            while (raf.getFilePointer() < raf.length()) {
+                String u = raf.readUTF();
+                String p = raf.readUTF();
+                int c = raf.readInt();
+                if (u.equals(username)) {
+                    System.out.println("Current chips amount: " + c);
+                    System.out.println("Enter new chips amount or type 'cancel' to exit:");
+                    String input = scanner.next();
+                    if (input.equalsIgnoreCase("cancel")) {
+                        return;
+                    }
+                    int newChips = Integer.parseInt(input);
+                    raf.seek(raf.getFilePointer() - 4);
+                    raf.writeInt(newChips);
+                    System.out.println("Chips updated successfully.");
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                System.out.println("Player not found.");
+            }
+            raf.close();
+        } catch (IOException e) {
+            System.out.println("Error editing chips.");
+            e.printStackTrace();
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a valid number or 'cancel'.");
+            editChips();
+        }
+    }
+    
+
     public void start() {
         System.out.println("Welcome to the Administration module!");
 
         while (true) {
-            System.out.println("Please select one of the following options:");
-            System.out.println("1. a");
-            System.out.println("2. b");
-            System.out.println("3. c");
-            System.out.println("4. d");
-            System.out.println("5. e");
-            System.out.println("6. f");
-            System.out.println("7. g");
+            System.out.println("Input a number to select an option: ");
+            System.out.println("1. Create a player");
+            System.out.println("2. View all players");
+            System.out.println("3. Delete a player");
+            System.out.println("4. Issue more chips to a player");
+            System.out.println("5. Reset player's password");
+            System.out.println("6. Change administrator password");
+            System.out.println("7. Logout.");
             System.out.println("Enter any other key to exit.");
 
             String choice = scanner.next();
             switch (choice) {
                 case "1":
-                    System.out.println("Option a selected.");
+                    System.out.println("Create a player option selected. \n");
+                    createPlayer();
                     break;
                 case "2":
-                    System.out.println("Option b selected.");
+                    System.out.println("Viewing all players... \n");
+                    viewPlayers();
                     break;
                 case "3":
-                    System.out.println("Option c selected.");
+                    System.out.println("Delete a player option selected. \n");
+                    viewPlayers();
+                    deletePlayer();
                     break;
                 case "4":
-                    System.out.println("Option d selected.");
+                    System.out.println("Issue more chips to a player selected. \n");
+                    viewPlayers();
+                    editChips();
                     break;
                 case "5":
                     System.out.println("Option e selected.");
