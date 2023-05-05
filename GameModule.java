@@ -1,9 +1,4 @@
-// 7907175
-// Jeric Dave Ubay-Ubay Nufable
-// University of Wollongong
-// CSIT 121
-// Bachelors of Business in Information Technology
-// Due Date 23/4/2023
+
 
 import java.util.List;
 import java.util.Scanner;
