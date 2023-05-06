@@ -47,7 +47,7 @@ public class Administration {
 
     public void viewPlayers() {
         System.out.println("USERNAME\tPASSWORD\t\t\t\t\t\t\t\t\tCHIPS");
-        System.out.println("------------------------------------------------------------------------------------------------------");
+        System.out.println("-----------------------------------------------------------------------------------------------------");
     
         try {
             FileInputStream fileIn = new FileInputStream("players.bin");
@@ -61,7 +61,7 @@ public class Administration {
                 }
             }
         } catch (EOFException e) {
-            System.out.println("------------------------------------------------------------------------------------------------------");
+            System.out.println("-----------------------------------------------------------------------------------------------------");
         } catch (IOException e) {
             System.out.println("Error viewing players.");
             e.printStackTrace();
@@ -159,12 +159,75 @@ public class Administration {
         }
     }
     
+    
+    public void resetPlayerPassword() {
+        System.out.println("Enter the username of the player whose password you want to reset:");
+        String username = scanner.next();
+        System.out.println("Enter the new password:");
+        String newPassword = scanner.next();
+    
+        try {
+            // open the file in read-write mode using RandomAccessFile
+            RandomAccessFile raf = new RandomAccessFile("players.bin", "rw");
+    
+            // seek to the beginning of the file
+            raf.seek(0);
+    
+            boolean found = false;
+    
+            // iterate over the players in the file
+            while (raf.getFilePointer() < raf.length()) {
+                String fileUsername = raf.readUTF();
+    
+                // check if the current player matches the username we're looking for
+                if (fileUsername.equals(username)) {
+                    // overwrite the existing password with the new one
+                    raf.writeUTF(Utility.getHash(newPassword));
+    
+                    System.out.println("Password reset successfully.");
+                    System.out.println("New password for " + username + " is: " + newPassword);
+                    found = true;
+                    break;
+                } else {
+                    // skip over the password and chips fields for this player
+                    raf.readUTF();
+                    raf.readInt();
+                }
+            }
+    
+            if (!found) {
+                System.out.println("Player not found.");
+            }
+    
+            raf.close();
+        } catch (IOException e) {
+            System.out.println("Error resetting player password.");
+            e.printStackTrace();
+        }
+    }
+    
+    public void changeAdminPassword() {
+        System.out.println("Enter new password: ");
+        String password = scanner.next();
+        
+        try {
+            FileWriter fileWriter = new FileWriter("admin.txt");
+            fileWriter.write(Utility.getHash(password));
+            fileWriter.close();
+            System.out.println("");
+            System.out.println("Admin password changed successfully.\n");
+        } catch (IOException e) {
+            System.out.println("Error changing admin password.");
+            e.printStackTrace();
+        }
+    }
+    
 
     public void start() {
         System.out.println("Welcome to the Administration module!");
 
         while (true) {
-            System.out.println("Input a number to select an option: ");
+            
             System.out.println("1. Create a player");
             System.out.println("2. View all players");
             System.out.println("3. Delete a player");
@@ -172,8 +235,8 @@ public class Administration {
             System.out.println("5. Reset player's password");
             System.out.println("6. Change administrator password");
             System.out.println("7. Logout.");
-            System.out.println("Enter any other key to exit.");
 
+            System.out.print("Input a number to select an option: ");
             String choice = scanner.next();
             switch (choice) {
                 case "1":
@@ -195,17 +258,21 @@ public class Administration {
                     editChips();
                     break;
                 case "5":
-                    System.out.println("Option e selected.");
+                    System.out.println("Reset player's password");
+                    viewPlayers();
+                    resetPlayerPassword(); 
                     break;
                 case "6":
-                    System.out.println("Option f selected.");
+                    System.out.println("Change administrator password selected. \n");
+                    changeAdminPassword();
                     break;
                 case "7":
-                    System.out.println("Option g selected.");
-                    break;
+                    System.out.println("Logging out... \n");
+                    GameModule gameModule = new GameModule();
+                    gameModule.start();
                 default:
-                    System.out.println("Exiting Administration module...");
-                    return;
+                    System.out.println("Invalid Option, please try again.");
+                    start();
             }
         }
     }

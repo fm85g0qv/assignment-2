@@ -83,7 +83,7 @@ public class GameModule {
             }
             
             // Check if user is admin
-            // username and password is admin
+            // username and password is admin by default
             String hashedPassword = Utility.getHash(password);
             if (username.equals("admin") && hashedPassword.equals(expectedHash)) {
                 System.out.print("\nAdmin Login successful! Starting Administration Module...\n\n");
