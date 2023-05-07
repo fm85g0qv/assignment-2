@@ -1,4 +1,4 @@
-//this is all very placeholder still, but it's a start
+//ALL GOOD NOW!
 
 import java.util.Scanner;
 import java.io.*;
@@ -14,41 +14,112 @@ public class Administration {
     }
 
     public void createPlayer() {
-        System.out.println("Enter username:");
-        String username = scanner.next();
-        System.out.println("Enter password:");
-        String password = scanner.next();
-        System.out.println("Enter starting chips:");
-        int chips = scanner.nextInt();
-
+        String username = "";
+        String password = "";
+        int chips = 0;
+    
+        while (true) {
+            System.out.println("Enter username:");
+            if (scanner.hasNext()) {
+                String input = scanner.next();
+                if (input.matches("[a-zA-Z0-9]+")) {
+                    username = input;
+                    break;
+                } else {
+                    System.err.println("Invalid input. Please enter a valid username.");
+                }
+            }
+        }
+    
+        while (true) {
+            System.out.println("Enter password:");
+            if (scanner.hasNext()) {
+                String input = scanner.next();
+                if (input.matches("[a-zA-Z0-9]+")) {
+                    password = Utility.getHash(input);
+                    break;
+                } else {
+                    System.err.println("Invalid input. Please enter a valid password.");
+                }
+            }
+        }
+    
+        while (true) {
+            System.out.println("Enter starting chips:");
+            if (scanner.hasNextInt()) {
+                chips = scanner.nextInt();
+                break;
+            } else {
+                System.err.println("Invalid input. Please enter a valid integer.");
+                scanner.next();
+            }
+        }
+    
         try {
             // create a file output stream for writing to the binary file
             FileOutputStream fileOut = new FileOutputStream("players.bin", true);
-
+    
             // create a data output stream for writing primitive data types to the file
             // output stream
             DataOutputStream dataOut = new DataOutputStream(fileOut);
-
+    
             // write the player information to the file as primitive data types
             dataOut.writeUTF(username);
-            dataOut.writeUTF(Utility.getHash(password));
+            dataOut.writeUTF(password);
             dataOut.writeInt(chips);
-
+    
             // close the data output stream and file output stream
             dataOut.close();
             fileOut.close();
-
+    
             System.out.println("Player created successfully.");
         } catch (IOException e) {
             System.out.println("Error creating player.");
             e.printStackTrace();
         }
     }
+    
+
+    // public void createPlayer() {
+    //     System.out.println("Enter username:");
+    //     String username = scanner.next();
+    //     System.out.println("Enter password:");
+    //     String password = scanner.next();
+    //     System.out.println("Enter starting chips:");
+    //     int chips = scanner.nextInt();
+
+    //     try {
+    //         // create a file output stream for writing to the binary file
+    //         FileOutputStream fileOut = new FileOutputStream("players.bin", true);
+
+    //         // create a data output stream for writing primitive data types to the file
+    //         // output stream
+    //         DataOutputStream dataOut = new DataOutputStream(fileOut);
+
+    //         // write the player information to the file as primitive data types
+    //         dataOut.writeUTF(username);
+    //         dataOut.writeUTF(Utility.getHash(password));
+    //         dataOut.writeInt(chips);
+
+    //         // close the data output stream and file output stream
+    //         dataOut.close();
+    //         fileOut.close();
+
+    //         System.out.println("Player created successfully.");
+    //     } catch (IOException e) {
+    //         System.out.println("Error creating player.");
+    //         e.printStackTrace();
+    //     }
+    // }
 
     public void viewPlayers() {
-        System.out.println("USERNAME\tPASSWORD\t\t\t\t\t\t\t\t\tCHIPS");
-        System.out.println("-----------------------------------------------------------------------------------------------------");
-    
+        int usernameWidth = 15;
+        int passwordWidth = 64;
+        int chipsWidth = 5;
+        System.out.printf("%-" + usernameWidth + "s %-" + passwordWidth + "s %" + chipsWidth + "s\n",
+            "USERNAME", "PASSWORD", "CHIPS");
+        System.out.println("-".repeat(usernameWidth + passwordWidth + chipsWidth + 1));
+        
         try {
             FileInputStream fileIn = new FileInputStream("players.bin");
             try (DataInputStream dataIn = new DataInputStream(fileIn)) {
@@ -56,17 +127,43 @@ public class Administration {
                     String username = dataIn.readUTF();
                     String password = dataIn.readUTF();
                     int chips = dataIn.readInt();
-   
-                    System.out.printf("%s\t\t%s\t\t%d\n", username, password, chips);
+       
+                    System.out.printf("%-" + usernameWidth + "s %-" + passwordWidth + "s %" + chipsWidth + "d\n",
+                        username, password, chips);
                 }
             }
         } catch (EOFException e) {
-            System.out.println("-----------------------------------------------------------------------------------------------------");
+            System.out.println("-".repeat(usernameWidth + passwordWidth + chipsWidth + 1));
         } catch (IOException e) {
             System.out.println("Error viewing players.");
             e.printStackTrace();
         }
     }
+    
+    
+
+    // public void viewPlayers() {
+    //     System.out.println("USERNAME\tPASSWORD\t\t\t\t\t\t\t\t\tCHIPS");
+    //     System.out.println("-----------------------------------------------------------------------------------------------------");
+    
+    //     try {
+    //         FileInputStream fileIn = new FileInputStream("players.bin");
+    //         try (DataInputStream dataIn = new DataInputStream(fileIn)) {
+    //             while (true) {
+    //                 String username = dataIn.readUTF();
+    //                 String password = dataIn.readUTF();
+    //                 int chips = dataIn.readInt();
+   
+    //                 System.out.printf("%s\t\t%s\t\t%d\n", username, password, chips);
+    //             }
+    //         }
+    //     } catch (EOFException e) {
+    //         System.out.println("-----------------------------------------------------------------------------------------------------");
+    //     } catch (IOException e) {
+    //         System.out.println("Error viewing players.");
+    //         e.printStackTrace();
+    //     }
+    // }
     
     public void deletePlayer() {
         System.out.print("Enter username of player to delete (Type 'cancel' to quit.):");
@@ -158,54 +255,127 @@ public class Administration {
             editChips();
         }
     }
-    
-    
+
     public void resetPlayerPassword() {
-        System.out.println("Enter the username of the player whose password you want to reset:");
-        String username = scanner.next();
-        System.out.println("Enter the new password:");
-        String newPassword = scanner.next();
+        boolean validUsername = false;
+        String username = "";
+        while (!validUsername) {
+            System.out.println("Enter the username of the player whose password you want to reset:");
+            username = scanner.next();
+            try {
+                RandomAccessFile raf = new RandomAccessFile("players.bin", "rw");
+                raf.seek(0);
+                boolean found = false;
+                while (raf.getFilePointer() < raf.length()) {
+                    String fileUsername = raf.readUTF();
+                    if (fileUsername.equals(username)) {
+                        found = true;
+                        break;
+                    } else {
+                        raf.readUTF();
+                        raf.readInt();
+                    }
+                }
+                if (found) {
+                    validUsername = true;
+                } else {
+                    System.out.println("Invalid username. Please try again.");
+                }
+                raf.close();
+            } catch (IOException e) {
+                System.out.println("Error checking player username.");
+                e.printStackTrace();
+            }
+        }
+        boolean validPassword = false;
+        String newPassword = "";
+        while (!validPassword) {
+            System.out.println("Enter the new password:");
+            newPassword = scanner.next();
+            if (newPassword.matches("[a-zA-Z0-9]+")) {
+                validPassword = true;
+            } else {
+                System.out.println("Password must be alphanumeric. Please try again.");
+            }
+        }
     
         try {
-            // open the file in read-write mode using RandomAccessFile
             RandomAccessFile raf = new RandomAccessFile("players.bin", "rw");
-    
-            // seek to the beginning of the file
             raf.seek(0);
-    
             boolean found = false;
-    
-            // iterate over the players in the file
             while (raf.getFilePointer() < raf.length()) {
                 String fileUsername = raf.readUTF();
-    
-                // check if the current player matches the username we're looking for
                 if (fileUsername.equals(username)) {
-                    // overwrite the existing password with the new one
                     raf.writeUTF(Utility.getHash(newPassword));
-    
                     System.out.println("Password reset successfully.");
                     System.out.println("New password for " + username + " is: " + newPassword);
                     found = true;
                     break;
                 } else {
-                    // skip over the password and chips fields for this player
                     raf.readUTF();
                     raf.readInt();
                 }
             }
-    
             if (!found) {
                 System.out.println("Player not found.");
             }
-    
             raf.close();
         } catch (IOException e) {
             System.out.println("Error resetting player password.");
             e.printStackTrace();
         }
-    }
+    }    
     
+    
+    
+    // public void resetPlayerPassword() {
+    //     System.out.println("Enter the username of the player whose password you want to reset:");
+    //     String username = scanner.next();
+    //     System.out.println("Enter the new password:");
+    //     String newPassword = scanner.next();
+    
+    //     try {
+    //         // open the file in read-write mode using RandomAccessFile
+    //         RandomAccessFile raf = new RandomAccessFile("players.bin", "rw");
+    
+    //         // seek to the beginning of the file
+    //         raf.seek(0);
+    
+    //         boolean found = false;
+    
+    //         // iterate over the players in the file
+    //         while (raf.getFilePointer() < raf.length()) {
+    //             String fileUsername = raf.readUTF();
+    
+    //             // check if the current player matches the username we're looking for
+    //             if (fileUsername.equals(username)) {
+    //                 // overwrite the existing password with the new one
+    //                 raf.writeUTF(Utility.getHash(newPassword));
+    
+    //                 System.out.println("Password reset successfully.");
+    //                 System.out.println("New password for " + username + " is: " + newPassword);
+    //                 found = true;
+    //                 break;
+    //             } else {
+    //                 // skip over the password and chips fields for this player
+    //                 raf.readUTF();
+    //                 raf.readInt();
+    //             }
+    //         }
+    
+    //         if (!found) {
+    //             System.out.println("Player not found.");
+    //         }
+    
+    //         raf.close();
+    //     } catch (IOException e) {
+    //         System.out.println("Error resetting player password.");
+    //         e.printStackTrace();
+    //     }
+    // }
+    
+       
+
     public void changeAdminPassword() {
         System.out.println("Enter new password: ");
         String password = scanner.next();
@@ -215,7 +385,7 @@ public class Administration {
             fileWriter.write(Utility.getHash(password));
             fileWriter.close();
             System.out.println("");
-            System.out.println("Admin password changed successfully.\n");
+            System.out.println("Admin password changed successfully. New password is: " + password);
         } catch (IOException e) {
             System.out.println("Error changing admin password.");
             e.printStackTrace();
@@ -269,7 +439,7 @@ public class Administration {
                 case "7":
                     System.out.println("Logging out... \n");
                     GameModule gameModule = new GameModule();
-                    gameModule.start();
+                    gameModule.gameLoop();
                 default:
                     System.out.println("Invalid Option, please try again.");
                     start();

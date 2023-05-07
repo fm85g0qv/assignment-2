@@ -6,7 +6,7 @@ public class User {
 
     public User(String username, String password, int chips) {
         this.username = username;
-        this.password = password;
+        this.password = Utility.getHash(password);
         this.chips = chips;
     }
 
